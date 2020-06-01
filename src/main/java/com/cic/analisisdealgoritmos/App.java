@@ -125,11 +125,11 @@ public class App extends Application {
     }
 
     LineChart<Number, Number> initializeChart(String xAxisLabel, String yAxisLabel, String title) {
-        final NumberAxis originalXAxis = new NumberAxis(0.0, (double) ComplexAudioReader.sampleSize, 64.0),
-                originalYAxis = new NumberAxis();
-        originalXAxis.setLabel(xAxisLabel);
-        originalYAxis.setLabel(yAxisLabel);
-        LineChart<Number, Number> chart = new LineChart<Number, Number>(originalXAxis, originalYAxis);
+        final NumberAxis xAxis = new NumberAxis(0.0, (double) ComplexAudioReader.sampleSize, 64.0),
+                yAxis = new NumberAxis();
+        xAxis.setLabel(xAxisLabel);
+        yAxis.setLabel(yAxisLabel);
+        LineChart<Number, Number> chart = new LineChart<Number, Number>(xAxis, yAxis);
         chart.setTitle(title);
         chart.setAnimated(false);
         chart.setCreateSymbols(false);
@@ -137,10 +137,10 @@ public class App extends Application {
     }
 
     ScatterChart<Number, Number> initializeFftChart(String xAxisLabel, String yAxisLabel, String title) {
-        final NumberAxis originalXAxis = new NumberAxis(), originalYAxis = new NumberAxis();
-        originalXAxis.setLabel(xAxisLabel);
-        originalYAxis.setLabel(yAxisLabel);
-        ScatterChart<Number, Number> chart = new ScatterChart<Number, Number>(originalXAxis, originalYAxis);
+        final NumberAxis xAxis = new NumberAxis(), yAxis = new NumberAxis();
+        xAxis.setLabel(xAxisLabel);
+        yAxis.setLabel(yAxisLabel);
+        ScatterChart<Number, Number> chart = new ScatterChart<Number, Number>(xAxis, yAxis);
         chart.setTitle(title);
         chart.setAnimated(false);
         return chart;
