@@ -11,7 +11,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import org.apache.commons.math3.complex.Complex;
 
 public class ComplexAudioReader implements AutoCloseable {
-    private static final int samples = 1024;
+    public static final int sampleSize = 1024;
     private final File file;
     private final AudioInputStream audioInputStream;
     private int bytesPerFrame;
@@ -25,7 +25,7 @@ public class ComplexAudioReader implements AutoCloseable {
         this.file = new File(path);
         this.audioInputStream = AudioSystem.getAudioInputStream(file);
         this.bytesPerFrame = audioInputStream.getFormat().getFrameSize();
-        this.numBytes = samples * bytesPerFrame;
+        this.numBytes = sampleSize * bytesPerFrame;
         this.audioBytes = new byte[numBytes];
         this.numBytesRead = 0;
         this.numFramesRead = 0;
@@ -59,9 +59,6 @@ public class ComplexAudioReader implements AutoCloseable {
         this.audioInputStream.close();
     }
 
-    /**
-     * @return the totalFramesRead
-     */
     public int getTotalFramesRead() {
         return totalFramesRead;
     }
@@ -72,6 +69,10 @@ public class ComplexAudioReader implements AutoCloseable {
 
     public int getCurrentOffest() {
         return (totalFramesRead) * bytesPerFrame;
+    }
+
+    public int getSampleSize(){
+        return sampleSize;
     }
 
 }

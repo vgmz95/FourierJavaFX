@@ -64,4 +64,12 @@ public class Fourier {
 
     }
 
+    public static double getAmplitude(Complex complex) {
+        return FastMath.sqrt(FastMath.pow(complex.getReal(), 2.0d) + FastMath.pow(complex.getImaginary(), 2.0d));
+    }
+
+    public static double getPhase(Complex complex) {
+        return FastMath.atan2(complex.getImaginary(), complex.getReal());
+    }
+
 }
