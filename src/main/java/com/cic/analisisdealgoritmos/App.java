@@ -2,6 +2,7 @@ package com.cic.analisisdealgoritmos;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -154,6 +155,7 @@ public class App extends Application {
         }
         chart.getData().clear();
         chart.getData().addAll(serie);
+
     }
 
     void updateTransformedChart(ScatterChart<Number, Number> fftSignalChart, Complex[] data, String name) {
