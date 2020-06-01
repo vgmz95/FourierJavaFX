@@ -41,30 +41,55 @@ public class App extends Application {
     public void start(Stage stage) {
         initializeGUI(stage);
 
-        try (ComplexAudioReader audioReader = new ComplexAudioReader(inputPath);
-                ComplexAudioWriter audioWriter = new ComplexAudioWriter(outputPath, audioReader.getFormat());
-                SourceDataLine line = AudioSystem.getSourceDataLine(audioReader.getFormat());) {
-            Complex[] readComplexAudio = audioReader.readComplexAudioFile();
-            Complex[] innerreadComplexAudio = readComplexAudio;
-            line.open(audioReader.getFormat());
-            line.start();
-            Complex[] fft = Fourier.fft(readComplexAudio); // Get FFT
-            Complex[] ifft = Fourier.ifft(fft); // Get IFFT
-            // Convert complex to byte array
-            byte[] ifftByteData = ComplexAudioWriter.convertComplexArrayToByte(ifft);
-            // Write IFFT data to file buffer
-            audioWriter.writeToBuffer(ifft);
-            // Update GUI
-            updateCharts(innerreadComplexAudio, fft, ifft);
-            // Write IFF data to the speaker's buffer
-            line.write(ifftByteData, 0, ifftByteData.length);
+        Task<Void> task = new Task<Void>() {
+            @Override
+            public void run() {
+                try (ComplexAudioReader audioReader = new ComplexAudioReader(inputPath);
+                        ComplexAudioWriter audioWriter = new ComplexAudioWriter(outputPath, audioReader.getFormat());
+                        SourceDataLine line = AudioSystem.getSourceDataLine(audioReader.getFormat());) {
+                    Complex[] readComplexAudio = null;
+                    while ((readComplexAudio = audioReader.readComplexAudioFile()) != null) {
+                        Complex[] finalReadComplexAudio = readComplexAudio;
+                        line.open(audioReader.getFormat());
+                        line.start();
+                        Complex[] fft = Fourier.fft(readComplexAudio); // Get FFT
+                        Complex[] ifft = Fourier.ifft(fft); // Get IFFT
+                        // Convert complex to byte array
+                        byte[] ifftByteData = ComplexAudioWriter.convertComplexArrayToByte(ifft);
+                        // Write IFFT data to file buffer
+                        audioWriter.writeToBuffer(ifft);
+                        // Write IFF data to the speaker's buffer
+                        Platform.runLater(new Runnable() {
 
-            audioWriter.saveToFile();
-            line.drain();
+                            @Override
+                            public void run() {
+                                updateCharts(finalReadComplexAudio, fft, ifft);
+                                line.write(ifftByteData, 0, ifftByteData.length);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                            }
+
+                        });
+
+                       
+                    }
+                    audioWriter.saveToFile();
+                    line.drain();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
+
+            @Override
+            protected Void call() throws Exception {
+                // TODO Auto-generated method stub
+                return null;
+            }
+        };
+        var a = new Thread(task);
+        a.setDaemon(true);
+        a.start();
+        
 
     }
 
@@ -80,7 +105,7 @@ public class App extends Application {
         fftSignalChart = new LineChart<Number, Number>(new NumberAxis(), new NumberAxis());
         fftSignalChart.setTitle("FFT");
         fftSignalChart.setAnimated(false);
-       // fftSignalChart.setCreateSymbols(false);
+        // fftSignalChart.setCreateSymbols(false);
 
         // IFFT
         ifftSignalChart = new LineChart<Number, Number>(new NumberAxis(), new NumberAxis());
@@ -106,7 +131,7 @@ public class App extends Application {
         // FFT
         Series<Number, Number> fftSignalSeries = new Series<Number, Number>();
         for (int i = 0; i < fft.length; i++) {
-            if(getAmplitude(fft[i])!=0.0d)
+            if (getAmplitude(fft[i]) != 0.0d)
                 fftSignalSeries.getData().add(new Data<Number, Number>(getPhase(fft[i]), getAmplitude(fft[i])));
         }
 
@@ -129,7 +154,7 @@ public class App extends Application {
         return FastMath.sqrt(FastMath.pow(complex.getReal(), 2.0d) + FastMath.pow(complex.getImaginary(), 2.0d));
     }
 
-    private double getPhase(Complex complex){
+    private double getPhase(Complex complex) {
         return FastMath.atan2(complex.getImaginary(), complex.getReal());
     }
 
