@@ -1,8 +1,8 @@
 package com.cic.analisisdealgoritmos;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -36,7 +36,7 @@ import javafx.stage.Stage;
  * JavaFX Fourier App
  */
 public class App extends Application {
-    // Dymanic GUI objects
+    // GUI objects
     // Charts
     LineChart<Number, Number> originalSignalChart, ifftSignalChart;
     ScatterChart<Number, Number> fftSignalChart;
@@ -46,10 +46,21 @@ public class App extends Application {
     List<Complex[]> originalSamples, fftSamples, ifftSamples;
     int currentIndex = 0, maxIndex = 0;
     // Paths
-    String inputPath = "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3s.wav";
-    String outputPath = "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3sCOPY.wav";
+    public static String inputPath;
+    public static String outputPath;
 
     public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Especifique la ruta del archivo");
+            System.exit(-1);
+        }
+        inputPath = args[0];
+        String[] split = inputPath.split("\\.");
+        if (split.length != 2) {
+            System.err.println("El archivo no tiene extensión");
+            System.exit(-1);
+        }
+        outputPath = split[0] + "_SALIDA." + split[1];
         launch();
     }
 

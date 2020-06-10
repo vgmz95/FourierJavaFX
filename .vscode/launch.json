@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "type": "java",
             "name": "Debug (Launch) - Current File",
@@ -15,7 +16,8 @@
             "name": "Debug (Launch)-App<fourier>",
             "request": "launch",
             "mainClass": "com.cic.analisisdealgoritmos/com.cic.analisisdealgoritmos.App",
-            "projectName": "fourier"
+            "projectName": "fourier",
+            "args": "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3s.wav"
         }
     ]
 }
