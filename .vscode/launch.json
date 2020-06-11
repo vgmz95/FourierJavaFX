@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "com.cic.analisisdealgoritmos/com.cic.analisisdealgoritmos.App",
             "projectName": "fourier",
-            "args": "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3s.wav"
+            "args": "C:\\Users\\victo\\Downloads\\16.wav"
         }
     ]
 }

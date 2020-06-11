@@ -1,7 +1,7 @@
 package com.cic.analisisdealgoritmos;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +55,10 @@ public class App extends Application {
             System.exit(-1);
         }
         inputPath = args[0];
+        if (!Paths.get(inputPath).toFile().exists()) {
+            System.err.println("El archivo no existe");
+            System.exit(-1);
+        }
         String[] split = inputPath.split("\\.");
         if (split.length != 2) {
             System.err.println("El archivo no tiene extensión");
@@ -188,7 +192,7 @@ public class App extends Application {
         updateSignalChart(ifftSignalChart, ifft, "ifft");
     }
 
-    void processAudio() throws UnsupportedAudioFileException, IOException {
+    void processAudio() {
         originalSamples = new ArrayList<>();
         fftSamples = new ArrayList<>();
         ifftSamples = new ArrayList<>();
@@ -204,6 +208,8 @@ public class App extends Application {
                 audioWriter.writeToBuffer(ifft);// Write IFFT data to file buffer
             }
             audioWriter.saveToFile(); // Commit to file
+        }catch(Exception e){
+            e.printStackTrace();
         }
     }
 

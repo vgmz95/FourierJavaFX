@@ -2,6 +2,9 @@ package com.cic.analisisdealgoritmos.ioaudio;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -38,7 +41,7 @@ public class ComplexAudioReader implements AutoCloseable {
             // Calculate the number of frames actually read.
             numFramesRead = numBytesRead / bytesPerFrame;
             totalFramesRead += numFramesRead;
-            return convertByteArrayToComplex(audioBytes);
+            return convertByteArrayToComplex16(audioBytes);
         } else {
             // End of file
             return null;
@@ -50,6 +53,16 @@ public class ComplexAudioReader implements AutoCloseable {
         Complex[] complex = new Complex[bytes.length];
         for (int i = 0; i < bytes.length; i++) {
             complex[i] = new Complex((double) (Byte.toUnsignedInt(bytes[i])));
+        }
+        return complex;
+    }
+
+    private Complex[] convertByteArrayToComplex16(byte[] bytes) {
+        Complex[] complex = new Complex[bytes.length / 2];
+        short[] shorts = new short[bytes.length / 2];
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
+        for (int i = 0; i < shorts.length; i++) {
+            complex[i] = new Complex((double) (shorts[i]));
         }
         return complex;
     }
@@ -71,7 +84,7 @@ public class ComplexAudioReader implements AutoCloseable {
         return (totalFramesRead) * bytesPerFrame;
     }
 
-    public int getSampleSize(){
+    public int getSampleSize() {
         return sampleSize;
     }
 
