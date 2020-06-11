@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -181,6 +182,15 @@ public class App extends Application {
         }
         fftSignalChart.getData().clear();
         fftSignalChart.getData().addAll(serie);
+        
+        // Change node size
+        for (var series : fftSignalChart.getData()) {
+            for (var dato : series.getData()) {
+                Node node = dato.getNode();
+                node.setScaleX(Double.parseDouble("0.5"));
+                node.setScaleY(Double.parseDouble("0.5"));
+            }
+        }
     }
 
     void updateCharts(Complex[] readComplexAudio, Complex[] fft, Complex[] ifft) {
@@ -208,7 +218,7 @@ public class App extends Application {
                 audioWriter.writeToBuffer(ifft);// Write IFFT data to file buffer
             }
             audioWriter.saveToFile(); // Commit to file
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

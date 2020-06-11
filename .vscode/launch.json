@@ -17,7 +17,7 @@
             "request": "launch",
             "mainClass": "com.cic.analisisdealgoritmos/com.cic.analisisdealgoritmos.App",
             "projectName": "fourier",
-            "args": "C:\\Users\\victo\\Downloads\\16.wav"
+            "args": "C:\\Users\\victo\\Downloads\\AM.wav"
         }
     ]
 }
