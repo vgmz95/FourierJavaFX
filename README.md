@@ -11,7 +11,7 @@ Un ejemplo de ejecución seria: \
 
 ## Capturas de pantalla
 ### Archivo sine.wav
-![Señal senoidal](img/sine.png)
+![Señal senoidal](./img/sine.png)
 ### Archivo AM.wav
 ![Señal de AM](img/AM.png)
 ### Archivo ImperialMarch60.wav
