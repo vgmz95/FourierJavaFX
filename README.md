@@ -21,8 +21,6 @@ Un ejemplo de ejecución seria: \
 
 ## Video (hacer clic en la imagen)
 
-<div align="center">
-  <a href="https://www.youtube.com/watch?v=VsJ87F69_lM"><img src="https://img.youtube.com/vi/VsJ87F69_lM/0.jpg" alt="IMAGE ALT TEXT"></a>
-</div>
+[![Proyecto 5 - Transformada rápida de Fourier - Moreno Zarate Victor Gibran](https://yt-embed.herokuapp.com/embed?v=VsJ87F69_lM)](https://www.youtube.com/watch?v=VsJ87F69_lM "Proyecto 5 - Transformada rápida de Fourier")
 
 
