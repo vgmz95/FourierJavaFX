@@ -11,11 +11,11 @@ Un ejemplo de ejecución seria: \
 
 ## Capturas de pantalla
 ### Archivo sine.wav
-![Señal senoidal](/img/sine.png)
+![Señal senoidal](img/sine.png)
 ### Archivo AM.wav
-![Señal de AM](/img/AM.png)
+![Señal de AM](img/AM.png)
 ### Archivo ImperialMarch60.wav
-![Archivo de audio](/img/ImperialMarch60.png)
+![Archivo de audio](img/ImperialMarch60.png)
 
 ## Video
 
