@@ -41,7 +41,11 @@ public class ComplexAudioReader implements AutoCloseable {
             // Calculate the number of frames actually read.
             numFramesRead = numBytesRead / bytesPerFrame;
             totalFramesRead += numFramesRead;
-            return convertByteArrayToComplex16(audioBytes);
+            if (this.audioInputStream.getFormat().getSampleSizeInBits() == 16) {
+                return convertByteArrayToComplex16(audioBytes);
+            } else {
+                return convertByteArrayToComplex(audioBytes);
+            }
         } else {
             // End of file
             return null;

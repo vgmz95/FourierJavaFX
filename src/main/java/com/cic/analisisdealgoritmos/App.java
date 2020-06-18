@@ -182,7 +182,7 @@ public class App extends Application {
         }
         fftSignalChart.getData().clear();
         fftSignalChart.getData().addAll(serie);
-        
+
         // Change node size
         for (var series : fftSignalChart.getData()) {
             for (var dato : series.getData()) {

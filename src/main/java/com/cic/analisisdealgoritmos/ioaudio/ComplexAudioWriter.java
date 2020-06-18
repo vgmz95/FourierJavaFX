@@ -34,11 +34,16 @@ public class ComplexAudioWriter implements AutoCloseable {
     }
 
     public void saveToFile() throws IOException {
-        byte[] byteBuffer = convertComplexArrayToByte16(complexAudio.toArray(new Complex[0]));
+        byte[] byteBuffer;
+        if (this.format.getSampleSizeInBits() == 16) {
+            byteBuffer = convertComplexArrayToByte16(complexAudio.toArray(new Complex[0]));
+        } else {
+            byteBuffer = convertComplexArrayToByte(complexAudio.toArray(new Complex[0]));
+        }
         ByteArrayInputStream bais = new ByteArrayInputStream(byteBuffer);
         audioInputStream = new AudioInputStream(bais, format, byteBuffer.length);
         AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, file);
-    }    
+    }
 
     public static byte[] convertComplexArrayToByte(Complex[] audioComplex) {
         byte[] result = new byte[audioComplex.length];
@@ -49,8 +54,8 @@ public class ComplexAudioWriter implements AutoCloseable {
     }
 
     public static byte[] convertComplexArrayToByte16(Complex[] audioComplex) {
-        byte[] result = new byte[audioComplex.length*2];
-        short [] shorts = new short[audioComplex.length];
+        byte[] result = new byte[audioComplex.length * 2];
+        short[] shorts = new short[audioComplex.length];
         for (int i = 0; i < audioComplex.length; i++) {
             shorts[i] = (short) Precision.round(audioComplex[i].getReal(), 0);
         }
@@ -62,6 +67,5 @@ public class ComplexAudioWriter implements AutoCloseable {
     public void close() throws IOException {
         audioInputStream.close();
     }
-    
 
 }
