@@ -59,8 +59,8 @@ public class App extends Application {
         if (!Paths.get(inputPath).toFile().exists()) {
             System.err.println("El archivo no existe");
             System.exit(-1);
-        }
-        String[] split = inputPath.split("\\.");
+        }        
+        String[] split = Paths.get(inputPath).toAbsolutePath().normalize().toString().split("\\.");
         if (split.length != 2) {
             System.err.println("El archivo no tiene extensión");
             System.exit(-1);
