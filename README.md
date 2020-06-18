@@ -19,7 +19,7 @@ Un ejemplo de ejecución seria: \
 ### Archivo ImperialMarch60.wav
 ![Archivo de audio](img/ImperialMarch60.PNG)
 
-## Video
+## Video (hacer clic en la imagen)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=VsJ87F69_lM"><img src="https://img.youtube.com/vi/VsJ87F69_lM/0.jpg" alt="IMAGE ALT TEXT"></a>
