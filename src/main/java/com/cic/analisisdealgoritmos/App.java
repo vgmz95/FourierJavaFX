@@ -1,136 +1,226 @@
 package com.cic.analisisdealgoritmos;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.sound.sampled.UnsupportedAudioFileException;
+
+import com.cic.analisisdealgoritmos.fourier.Fourier;
+import com.cic.analisisdealgoritmos.ioaudio.ComplexAudioReader;
+import com.cic.analisisdealgoritmos.ioaudio.ComplexAudioWriter;
+
+import org.apache.commons.math3.complex.Complex;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.XYChart.Data;
 import javafx.scene.chart.XYChart.Series;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import com.cic.analisisdealgoritmos.ioaudio.*;
-import com.cic.analisisdealgoritmos.fourier.Fourier;
-
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
-
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.AudioSystem;
-
 /**
- * JavaFX App
+ * JavaFX Fourier App
  */
 public class App extends Application {
-    // Chart objects
-    LineChart<Number, Number> originalSignalChart;
-    LineChart<Number, Number> fftSignalChart;
-    LineChart<Number, Number> ifftSignalChart;
-
+    // GUI objects
+    // Charts
+    LineChart<Number, Number> originalSignalChart, ifftSignalChart;
+    ScatterChart<Number, Number> fftSignalChart;
+    // Current sample index testbox
+    Text currentIndexText;
+    // Sample lists
+    List<Complex[]> originalSamples, fftSamples, ifftSamples;
+    int currentIndex = 0, maxIndex = 0;
     // Paths
-    String inputPath = "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3s.wav";
-    String outputPath = "C:\\Users\\victo\\Documents\\LINUX\\Music\\sin_1000Hz_-6dBFS_3sCOPY.wav";
+    public static String inputPath;
+    public static String outputPath;
 
     public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Especifique la ruta del archivo");
+            System.exit(-1);
+        }
+        inputPath = args[0];
+        if (!Paths.get(inputPath).toFile().exists()) {
+            System.err.println("El archivo no existe");
+            System.exit(-1);
+        }        
+        String[] split = Paths.get(inputPath).toAbsolutePath().normalize().toString().split("\\.");
+        if (split.length != 2) {
+            System.err.println("El archivo no tiene extensión");
+            System.exit(-1);
+        }
+        outputPath = split[0] + "_SALIDA." + split[1];
         launch();
     }
 
     @Override
     public void start(Stage stage) {
         initializeGUI(stage);
-
-        try (ComplexAudioReader audioReader = new ComplexAudioReader(inputPath);
-                ComplexAudioWriter audioWriter = new ComplexAudioWriter(outputPath, audioReader.getFormat());
-                SourceDataLine line = AudioSystem.getSourceDataLine(audioReader.getFormat());) {
-            Complex[] readComplexAudio = audioReader.readComplexAudioFile();
-            Complex[] innerreadComplexAudio = readComplexAudio;
-            line.open(audioReader.getFormat());
-            line.start();
-            Complex[] fft = Fourier.fft(readComplexAudio); // Get FFT
-            Complex[] ifft = Fourier.ifft(fft); // Get IFFT
-            // Convert complex to byte array
-            byte[] ifftByteData = ComplexAudioWriter.convertComplexArrayToByte(ifft);
-            // Write IFFT data to file buffer
-            audioWriter.writeToBuffer(ifft);
-            // Update GUI
-            updateCharts(innerreadComplexAudio, fft, ifft);
-            // Write IFF data to the speaker's buffer
-            line.write(ifftByteData, 0, ifftByteData.length);
-
-            audioWriter.saveToFile();
-            line.drain();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        // Analize audio data on a separate thread
+        Task<Void> task = new Task<Void>() {
+            @Override
+            public Void call() throws UnsupportedAudioFileException, IOException {
+                processAudio();
+                maxIndex = originalSamples.size();
+                if (maxIndex > 0) {
+                    Platform.runLater(() -> updateGUI());
+                }
+                return null;
+            }
+        };
+        new Thread(task).start();
     }
 
     private void initializeGUI(Stage stage) {
-        stage.setTitle("FFT"); // Windows title
+        // Windows title
+        stage.setTitle("FFT dividir y vencer");
         // Original signal GUI
-        originalSignalChart = new LineChart<Number, Number>(new NumberAxis(), new NumberAxis());
-        originalSignalChart.setTitle("Señal original");
-        originalSignalChart.setAnimated(false);
-        originalSignalChart.setCreateSymbols(false);
-
+        originalSignalChart = initializeChart("t", "f(t)", "Señal original");
         // FFT signal GUI
-        fftSignalChart = new LineChart<Number, Number>(new NumberAxis(), new NumberAxis());
-        fftSignalChart.setTitle("FFT");
-        fftSignalChart.setAnimated(false);
-       // fftSignalChart.setCreateSymbols(false);
+        fftSignalChart = initializeFftChart("Fase", "Amplitud", "FFT");
+        // IFFT signal GUI
+        ifftSignalChart = initializeChart("t", "f(t)", "IFFT");
 
-        // IFFT
-        ifftSignalChart = new LineChart<Number, Number>(new NumberAxis(), new NumberAxis());
-        ifftSignalChart.setTitle("IFFT");
-        ifftSignalChart.setAnimated(false);
-        ifftSignalChart.setCreateSymbols(false);
+        // *******Top Pane********** //
+        HBox hbox = new HBox();
+        hbox.setPadding(new Insets(15, 12, 15, 12));
+        hbox.setSpacing(10);
+        hbox.setStyle("-fx-background-color: #336699;");
+        // Hbox components
+        // Title
+        Text filenameDisplay = new Text(inputPath);
+        filenameDisplay.setFill(Color.WHITE);
+        filenameDisplay.setFont(Font.font(15));
+        // Show next sample button
+        Button beforeSample = new Button("Muestra anterior");
+        beforeSample.setPrefSize(140, 20);
+        beforeSample.setOnAction((ActionEvent e) -> {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateGUI();
+            }
+        });
+        // Show before sample button
+        Button nextSample = new Button("Muestra siguiente");
+        nextSample.setPrefSize(140, 20);
+        nextSample.setOnAction((ActionEvent e) -> {
+            if (currentIndex < maxIndex - 1) {
+                currentIndex++;
+                updateGUI();
+            }
+        });
+        // Current sample index
+        currentIndexText = new Text("?/?");
+        currentIndexText.setFill(Color.WHITE);
+        currentIndexText.setFont(Font.font(15));
+        hbox.getChildren().addAll(filenameDisplay, beforeSample, nextSample, currentIndexText);
 
-        var scene = new Scene(new VBox(originalSignalChart, fftSignalChart, ifftSignalChart), 800, 600);
+        Scene scene = new Scene(new VBox(hbox, originalSignalChart, fftSignalChart, ifftSignalChart), 1024, 768);
         stage.setScene(scene);
         stage.show();
     }
 
+    void updateGUI() {
+        currentIndexText.setText((currentIndex + 1) + "/" + (maxIndex));
+        updateCharts(originalSamples.get(currentIndex), fftSamples.get(currentIndex), ifftSamples.get(currentIndex));
+    }
+
+    LineChart<Number, Number> initializeChart(String xAxisLabel, String yAxisLabel, String title) {
+        final NumberAxis xAxis = new NumberAxis(0.0, (double) ComplexAudioReader.sampleSize, 64.0),
+                yAxis = new NumberAxis();
+        xAxis.setLabel(xAxisLabel);
+        yAxis.setLabel(yAxisLabel);
+        LineChart<Number, Number> chart = new LineChart<Number, Number>(xAxis, yAxis);
+        chart.setTitle(title);
+        chart.setAnimated(false);
+        chart.setCreateSymbols(false);
+        return chart;
+    }
+
+    ScatterChart<Number, Number> initializeFftChart(String xAxisLabel, String yAxisLabel, String title) {
+        final NumberAxis xAxis = new NumberAxis(), yAxis = new NumberAxis();
+        xAxis.setLabel(xAxisLabel);
+        yAxis.setLabel(yAxisLabel);
+        ScatterChart<Number, Number> chart = new ScatterChart<Number, Number>(xAxis, yAxis);
+        chart.setTitle(title);
+        chart.setAnimated(false);
+        return chart;
+    }
+
+    void updateSignalChart(LineChart<Number, Number> chart, Complex[] data, String name) {
+        Series<Number, Number> serie = new Series<Number, Number>();
+        serie.setName(name);
+        for (int i = 0; i < data.length; i++) {
+            serie.getData().add(new Data<Number, Number>(i, data[i].getReal()));
+        }
+        chart.getData().clear();
+        chart.getData().addAll(serie);
+
+    }
+
+    void updateTransformedChart(ScatterChart<Number, Number> fftSignalChart, Complex[] data, String name) {
+        Series<Number, Number> serie = new Series<Number, Number>();
+        serie.setName(name);
+        for (int i = 0; i < data.length; i++) {
+            serie.getData().add(new Data<Number, Number>(Fourier.getPhase(data[i]), Fourier.getAmplitude(data[i])));
+        }
+        fftSignalChart.getData().clear();
+        fftSignalChart.getData().addAll(serie);
+
+        // Change node size
+        for (var series : fftSignalChart.getData()) {
+            for (var dato : series.getData()) {
+                Node node = dato.getNode();
+                node.setScaleX(Double.parseDouble("0.5"));
+                node.setScaleY(Double.parseDouble("0.5"));
+            }
+        }
+    }
+
     void updateCharts(Complex[] readComplexAudio, Complex[] fft, Complex[] ifft) {
         // Original
-        Series<Number, Number> originalSignalSeries = new Series<Number, Number>();
-        for (int i = 0; i < readComplexAudio.length; i++) {
-            originalSignalSeries.getData().add(new Data<Number, Number>(i, readComplexAudio[i].getReal()));
-        }
-        originalSignalChart.getData().clear();
-        originalSignalSeries.setName("Original");
-        originalSignalChart.getData().addAll(originalSignalSeries);
-
+        updateSignalChart(originalSignalChart, readComplexAudio, "Señal original");
         // FFT
-        Series<Number, Number> fftSignalSeries = new Series<Number, Number>();
-        for (int i = 0; i < fft.length; i++) {
-            if(getAmplitude(fft[i])!=0.0d)
-                fftSignalSeries.getData().add(new Data<Number, Number>(getPhase(fft[i]), getAmplitude(fft[i])));
-        }
-
-        fftSignalChart.getData().clear();
-        fftSignalSeries.setName("FFT");
-        fftSignalChart.getData().addAll(fftSignalSeries);
-
+        updateTransformedChart(fftSignalChart, fft, "fft");
         // IFTT
-        Series<Number, Number> ifftSignalSeries = new Series<Number, Number>();
-        for (int i = 0; i < ifft.length; i++) {
-            ifftSignalSeries.getData().add(new Data<Number, Number>(i, ifft[i].getReal()));
+        updateSignalChart(ifftSignalChart, ifft, "ifft");
+    }
+
+    void processAudio() {
+        originalSamples = new ArrayList<>();
+        fftSamples = new ArrayList<>();
+        ifftSamples = new ArrayList<>();
+        try (ComplexAudioReader audioReader = new ComplexAudioReader(inputPath);
+                ComplexAudioWriter audioWriter = new ComplexAudioWriter(outputPath, audioReader.getFormat());) {
+            Complex[] readComplexAudio;
+            while ((readComplexAudio = audioReader.readComplexAudioFile()) != null) {
+                originalSamples.add(readComplexAudio);
+                Complex[] fft = Fourier.fft(readComplexAudio); // Get FFT
+                fftSamples.add(fft);
+                Complex[] ifft = Fourier.ifft(fft); // Get IFFT
+                ifftSamples.add(ifft);
+                audioWriter.writeToBuffer(ifft);// Write IFFT data to file buffer
+            }
+            audioWriter.saveToFile(); // Commit to file
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        ifftSignalChart.getData().clear();
-        ifftSignalSeries.setName("ifft");
-        ifftSignalChart.getData().addAll(ifftSignalSeries);
-
-    }
-
-    private double getAmplitude(Complex complex) {
-        return FastMath.sqrt(FastMath.pow(complex.getReal(), 2.0d) + FastMath.pow(complex.getImaginary(), 2.0d));
-    }
-
-    private double getPhase(Complex complex){
-        return FastMath.atan2(complex.getImaginary(), complex.getReal());
     }
 
 }

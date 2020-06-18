@@ -2,6 +2,9 @@ package com.cic.analisisdealgoritmos.ioaudio;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -11,7 +14,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import org.apache.commons.math3.complex.Complex;
 
 public class ComplexAudioReader implements AutoCloseable {
-    private static final int samples = 1024;
+    public static final int sampleSize = 1024;
     private final File file;
     private final AudioInputStream audioInputStream;
     private int bytesPerFrame;
@@ -25,7 +28,7 @@ public class ComplexAudioReader implements AutoCloseable {
         this.file = new File(path);
         this.audioInputStream = AudioSystem.getAudioInputStream(file);
         this.bytesPerFrame = audioInputStream.getFormat().getFrameSize();
-        this.numBytes = samples * bytesPerFrame;
+        this.numBytes = sampleSize * bytesPerFrame;
         this.audioBytes = new byte[numBytes];
         this.numBytesRead = 0;
         this.numFramesRead = 0;
@@ -38,7 +41,11 @@ public class ComplexAudioReader implements AutoCloseable {
             // Calculate the number of frames actually read.
             numFramesRead = numBytesRead / bytesPerFrame;
             totalFramesRead += numFramesRead;
-            return convertByteArrayToComplex(audioBytes);
+            if (this.audioInputStream.getFormat().getSampleSizeInBits() == 16) {
+                return convertByteArrayToComplex16(audioBytes);
+            } else {
+                return convertByteArrayToComplex(audioBytes);
+            }
         } else {
             // End of file
             return null;
@@ -54,14 +61,21 @@ public class ComplexAudioReader implements AutoCloseable {
         return complex;
     }
 
+    private Complex[] convertByteArrayToComplex16(byte[] bytes) {
+        Complex[] complex = new Complex[bytes.length / 2];
+        short[] shorts = new short[bytes.length / 2];
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
+        for (int i = 0; i < shorts.length; i++) {
+            complex[i] = new Complex((double) (shorts[i]));
+        }
+        return complex;
+    }
+
     @Override
     public void close() throws IOException {
         this.audioInputStream.close();
     }
 
-    /**
-     * @return the totalFramesRead
-     */
     public int getTotalFramesRead() {
         return totalFramesRead;
     }
@@ -72,6 +86,10 @@ public class ComplexAudioReader implements AutoCloseable {
 
     public int getCurrentOffest() {
         return (totalFramesRead) * bytesPerFrame;
+    }
+
+    public int getSampleSize() {
+        return sampleSize;
     }
 
 }
